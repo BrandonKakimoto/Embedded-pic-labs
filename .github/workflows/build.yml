@@ -1,0 +1,66 @@
+name: MPLAB Build Check
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/jpl-cpp/xc8-ci:3.10
+      credentials:
+        username: JPL11
+        password: ${{ secrets.GHCR_PULL_TOKEN }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Compile every lab project
+        run: |
+          set -u
+          fail=0
+          for proj in Lab*.X; do
+            [ -d "$proj" ] || continue
+            echo "::group::Building $proj"
+            if (cd "$proj" && {
+                  if ls *.c >/dev/null 2>&1; then
+                    SRC="*.c"; ls *.S >/dev/null 2>&1 && SRC="*.c *.S"
+                    xc8-cc -mcpu=18F46K22 -o firmware.elf $SRC
+                  else
+                    pic-as -mcpu=18F46K22 -o firmware.hex *.S
+                  fi
+                }); then
+              echo "PASS: $proj compiled"
+            else
+              echo "::error::$proj failed to compile"
+              fail=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $fail
+
+      - name: Verify HEX files were generated
+        run: |
+          set -u
+          fail=0
+          for proj in Lab*.X; do
+            [ -d "$proj" ] || continue
+            if [ -f "$proj/firmware.hex" ]; then
+              echo "PASS: $proj/firmware.hex ($(wc -c < "$proj/firmware.hex") bytes)"
+            else
+              echo "::error::$proj produced no firmware.hex"
+              fail=1
+            fi
+          done
+          exit $fail
