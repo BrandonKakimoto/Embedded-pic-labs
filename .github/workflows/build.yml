@@ -30,7 +30,7 @@ jobs:
         run: |
           set -u
           fail=0
-          for proj in Lab*.X; do
+          for proj in *.X; do
             [ -d "$proj" ] || continue
             echo "::group::Building $proj"
             if (cd "$proj" && {
@@ -54,7 +54,7 @@ jobs:
         run: |
           set -u
           fail=0
-          for proj in Lab*.X; do
+          for proj in *.X; do
             [ -d "$proj" ] || continue
             if [ -f "$proj/firmware.hex" ]; then
               echo "PASS: $proj/firmware.hex ($(wc -c < "$proj/firmware.hex") bytes)"
