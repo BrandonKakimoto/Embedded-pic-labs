@@ -1,6 +1,5 @@
-/*
- * File:   lab4.c
- * Author: <your names here>
+* File:   lab4.c
+ * Author: <Jason Lopez, Brandon Kakimoto>
  *
  * Lab 4 - Traffic Light Controller
  *         (FSM + Safety Mode + Pedestrian Crossing)
@@ -61,16 +60,16 @@ typedef enum {
  *        ddd
  */
 static const uint8_t sevenSeg[10] = {
-    0xDF, // TODO: 0 (a,b,c,d,e,f ON, g OFF)
-    0xDF, // TODO: 1
-    0xDF, // TODO: 2
-    0xDF, // TODO: 3
-    0xDF, // TODO: 4
-    0xDF, // TODO: 5
-    0xDF, // TODO: 6
-    0xDF, // TODO: 7
-    0xDF, // TODO: 8
-    0xDF  // TODO: 9
+    0xA0, // TODO: 0 (a,b,c,d,e,f ON, g OFF)
+    0xF9, // TODO: 1
+    0x64, // TODO: 2
+    0x70, // TODO: 3
+    0x39, // TODO: 4
+    0x32, // TODO: 5
+    0x22, // TODO: 6
+    0xF8, // TODO: 7
+    0x20, // TODO: 8
+    0x30  // TODO: 9
 };
 
 #define SEG_BLANK 0xDF          /* All segments OFF (preserves RC5 bit) */
@@ -79,27 +78,43 @@ static const uint8_t sevenSeg[10] = {
 static uint8_t pedRequest = 0;
 
 static void init(void) {
-    // TODO: Oscillator - 16 MHz HFINTOSC (IRCF/SCS)
+    
+    OSCCONbits.IRCF = 0b111; //set Oscillator 16 MHz
+    OSCCONbits.SCS = 0b10;
+    
+    ANSELA = 0x00;
+    ANSELB = 0x00;  //make PORTA/B/C/D/E digital
+    ANSELC = 0x00;
+    ANSELD = 0x00;
+    ANSELE = 0x00;
+   
+    
+    TRISD &= 0xC0; // PORTD RD0-RD5 outputs, PORTB RB0-RB5 outputs 
+    TRISB &= 0xC0;
+    TRISC &= 0x00; // PORTC segments as outputs, RC5 as input (button S2)
+    TRISC = 0x20;  
 
-    // TODO: Make PORTA/B/C/D/E digital (ANSELx = 0x00)
+    TRISEbits.TRISE0 = 1;// RE0 input (pedestrian button), RA4 output (request led)
+    TRISAbits.TRISA4 = 0;
+    
+    
 
-    // TODO: PORTD RD0-RD5 outputs, PORTB RB0-RB5 outputs (preserve bits 6-7)
-
-    // TODO: PORTC - segments as outputs, RC5 as input (button S2)
-
-    // TODO: RE0 input (pedestrian button), RA4 output (request LED)
-
-    // TODO: Blank the 7-segment display
+    LATC = (LATC & 0x20)| SEG_BLANK ;  // Blank the 7-segment display
 }
 
 /** Update traffic lights, touching only bits 0-5 of each port. */
 static void set_lights(uint8_t rd_val, uint8_t rb_val) {
-    // TODO: same masked write as the base lab
+    
+    LATD = (LATD & 0xC0)| (rd_val & 0x3F);
+    LATB = (LATB & 0xC0)| (rb_val & 0x3F);
+
 }
 
 /** Show one digit (0-9) on the 7-segment display, preserving RC5. */
 static void seg_show(uint8_t digit) {
-    // TODO: LATC = (LATC & 0x20) | (sevenSeg[digit] & ~0x20)
+    if(digit<=9){
+        LATC=(LATC &0x00)|(sevenSeg[digit]&(uint8_t)~0x00);
+    }
 }
 
 /**
@@ -108,9 +123,25 @@ static void seg_show(uint8_t digit) {
  * Returns early if the safety button (S2) is pressed.
  */
 static uint8_t delay_and_poll(uint16_t ms) {
-    // TODO: loop in small __delay_ms(10) steps:
-    //   - if RE0 pressed -> latch pedRequest = 1 and light RA4
-    //   - if RC5 (S2) pressed -> return 1 immediately (enter safety mode)
+    uint16_t i;
+    
+    for (i=0; i < ms; i+=10) {
+        if (PORTEbits.RE0 == 0) {
+       
+       pedRequest = 1;
+       LATAbits.LATA4 = 0;
+       
+         }  
+    if (PORTCbits. RC5 == 0){
+        
+        return 1; 
+        
+         }
+        
+        __delay_ms(10);
+        
+    }
+   
     return 0;
 }
 
@@ -120,20 +151,112 @@ void main(void) {
     TrafficState state = EW_GREEN;
 
     while (1) {
-        // TODO: Implement the FSM with a switch(state):
-        //
-        //   EW_GREEN:      lights, delay_and_poll(6000), -> EW_YELLOW
-        //   EW_YELLOW:     lights, delay_and_poll(3000),
-        //                  -> PED_COUNTDOWN if pedRequest else NS_GREEN
-        //   PED_COUNTDOWN: NS green / EW red; count 9..0 on the 7-seg,
-        //                  1 second per digit; clear pedRequest and RA4;
-        //                  blank display; -> NS_GREEN
-        //   NS_GREEN:      lights, delay_and_poll(6000), -> NS_YELLOW
-        //   NS_YELLOW:     lights, delay_and_poll(3000), -> EW_GREEN
-        //   ALL_RED_FLASH: flash both red pairs at ~1 Hz until S2 is
-        //                  pressed again, then -> EW_GREEN
-        //
-        // Any state: if delay_and_poll() reports S2, go to ALL_RED_FLASH.
+       uint8_t S2PRESSED;
+       switch (state) {
+           
+           case EW_GREEN :// EW_GREEN:lights, delay_and_poll(6000), -> EW_YELLOW
+               set_lights(0x09, 0x24);
+               
+            
+               
+               if (delay_and_poll(6000)) {
+                   state = ALL_RED_FLASH;
+               }
+               else {
+                   state = EW_YELLOW;
+               }
+               break; 
+               
+           case EW_YELLOW : // EW_YELLOW:lights, delay_and_poll(3000),PED_COUNTDOWN: NS green / EW red; count 9..0 on the 7-seg,
+                            // 1 second per digit; clear pedRequest and RA4; blank display; -> NS_GREEN
+               set_lights(0x09, 0x12);
+               
+               S2PRESSED = delay_and_poll(3000); 
+               
+               if (S2PRESSED){
+                   state = ALL_RED_FLASH;
+               }
+               else if (pedRequest){
+                   state = PED_COUNTDOWN; 
+               }
+               else {
+                   state = NS_GREEN;
+               }
+               
+               break; 
+               
+           case PED_COUNTDOWN : {  
+               set_lights(0x24, 0x09);
+               
+               S2PRESSED = 0;
+            uint8_t count = 10;
+            
+            while(count > 0){
+                count--; 
+              seg_show(count);
+              __delay_ms(1000);
+            } 
+            
+        pedRequest=0;  //clear the ped request 
+        
+        LATAbits.LATA4 = 1;// turn off the led
+
+        LATC = (LATC & 0x20) | SEG_BLANK;// blank the display 
+        
+        state = NS_GREEN;
+
+    break;
+    
+       }   
+           case NS_GREEN:  //   NS_GREEN: lights, delay_and_poll(6000), -> NS_YELLOW
+               set_lights(0x24, 0x09);
+               
+               if (delay_and_poll(6000)){
+                   state = ALL_RED_FLASH;
+               }
+               else {
+                   state = NS_YELLOW;
+               }
+               
+    break;
+               
+           case NS_YELLOW:
+               set_lights(0x12, 0x09);
+               
+               S2PRESSED= delay_and_poll(3000);
+               
+               if (S2PRESSED){
+                   state = ALL_RED_FLASH;
+                  
+               }
+               else {
+                   state = EW_GREEN;
+               }
+               
+               break; 
+               
+           case ALL_RED_FLASH:
+            while (PORTCbits.RC5==1){  
+            }
+            
+            while(PORTCbits.RC5 == 0){
+                set_lights(0x09,0x09);
+                __delay_ms(500);
+                
+                set_lights(0x00, 0x00);
+                __delay_ms(500);
+                
+               
+            }
+            
+            state= EW_GREEN;
+                    
+    break;
+           
+             
+       }
+       
+       
         (void)state;
     }
 }
