@@ -48,6 +48,24 @@ fi
 { echo; echo "## Provided files"; echo; echo "$provided_note"; } >> "$SUMMARY"
 echo "::endgroup::"
 
+# ---- 2b. requirements checklist (same check the grader runs) ----
+echo "::group::Requirements checklist"
+if [ -f .github/requirements.txt ]; then
+  { echo; echo "## Requirements checklist"; echo; echo "The grader's static score looks for exactly these, in your code (comments do not count)."; echo; } >> "$SUMMARY"
+  for proj in *.X; do
+    [ -d "$proj" ] || continue
+    grep -qE "^$proj	" .github/requirements.txt || continue
+    out=$(bash "$HERE/requirements.sh" "$proj" .github/requirements.txt .github/provided.sha256); nf=$?
+    tot=$(echo "$out" | grep -c .); ok=$((tot-nf))
+    echo "$proj: $ok/$tot"
+    { echo "**\`$proj\`** — $ok of $tot detected"; echo; echo "$out" | sed -E 's/^PASS	/- [x] /; s/^FAIL	/- [ ] /'; echo; } >> "$SUMMARY"
+    [ "$nf" -gt 0 ] && echo "::notice file=$proj::$proj: $ok of $tot required structures detected so far (see the run summary for the checklist)."
+  done
+else
+  echo "no .github/requirements.txt - skipping"
+fi
+echo "::endgroup::"
+
 # ---- 3. lint ----
 echo "::group::PIC18 lint"
 bash "$HERE/pic-lint.sh" || true

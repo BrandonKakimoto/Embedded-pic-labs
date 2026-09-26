@@ -33,8 +33,10 @@ the start of each lab session.
      writing `PORTx` instead of `LATx`, `__delay_ms` without
      `_XTAL_FREQ`, an ISR with no `GIE` or no flag clear, `ANSELx`
      written through the access bank in assembly, `main()` without a
-     `while(1)`, `=` inside an `if`. The summary also counts the
-     `TODO` markers you have left and shows who has committed to each lab.
+     `while(1)`, `=` inside an `if`. The summary also shows a
+     **Requirements checklist** per lab (the same structures the grader's
+     static score looks for, matched in code, not comments), counts the
+     `TODO` markers you have left, and shows who has committed to each lab.
 
    **A green check is required but does not by itself mean the lab is
    correct** — behavior is graded on hardware in lab. Warnings never
