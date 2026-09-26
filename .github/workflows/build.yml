@@ -1,4 +1,4 @@
-name: MPLAB Build Check
+name: Lab CI
 
 on:
   push:
@@ -9,13 +9,27 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  compile:
+  checks:
+    name: Repository checks
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
+    steps:
+      - name: Check out code (full history, for authorship)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Hygiene, provided files, lint, authorship
+        run: bash .github/scripts/repo-checks.sh
+
+  build:
+    name: Compile
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     container:
       image: ghcr.io/jpl-cpp/xc8-ci:3.10
       credentials:
@@ -26,41 +40,14 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Compile every lab project
-        run: |
-          set -u
-          fail=0
-          for proj in *.X; do
-            [ -d "$proj" ] || continue
-            echo "::group::Building $proj"
-            if (cd "$proj" && {
-                  if ls *.c >/dev/null 2>&1; then
-                    SRC="*.c"; ls *.S >/dev/null 2>&1 && SRC="*.c *.S"
-                    xc8-cc -mcpu=18F46K22 -o firmware.elf $SRC
-                  else
-                    pic-as -mcpu=18F46K22 -o firmware.hex *.S
-                  fi
-                }); then
-              echo "PASS: $proj compiled"
-            else
-              echo "::error::$proj failed to compile"
-              fail=1
-            fi
-            echo "::endgroup::"
-          done
-          exit $fail
+      - name: Compile every project (xc8-cc -Wall / pic-as)
+        run: bash .github/scripts/ci-build.sh
 
-      - name: Verify HEX files were generated
-        run: |
-          set -u
-          fail=0
-          for proj in *.X; do
-            [ -d "$proj" ] || continue
-            if [ -f "$proj/firmware.hex" ]; then
-              echo "PASS: $proj/firmware.hex ($(wc -c < "$proj/firmware.hex") bytes)"
-            else
-              echo "::error::$proj produced no firmware.hex"
-              fail=1
-            fi
-          done
-          exit $fail
+      - name: Upload firmware (download from this run's Artifacts to flash a CI-built hex)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-run${{ github.run_number }}
+          path: '*.X/firmware.hex'
+          if-no-files-found: ignore
+          retention-days: 14
