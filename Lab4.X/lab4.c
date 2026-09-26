@@ -1,4 +1,4 @@
-* File:   lab4.c
+ /* File:   lab4.c
  * Author: <Jason Lopez, Brandon Kakimoto>
  *
  * Lab 4 - Traffic Light Controller
