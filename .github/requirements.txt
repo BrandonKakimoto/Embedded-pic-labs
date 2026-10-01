@@ -1,7 +1,7 @@
 # Per-lab requirements: what the grader's static score and the CI checklist look for.
 # Format: <LabDir><TAB><what students see><TAB><regex matched against comment-stripped code in student files>
 # Everything here is stated in the lab handout; the checklist just makes it visible before submission.
-Lab2.X	Timer0 configured (T0CON written)	\bT0CON\b
+Lab2.X	Timer0 configured (T0CON written)	\bT0CON
 Lab2.X	Random generator seeded (srand)	\bsrand\s*\(
 Lab2.X	PORTB switched to digital (ANSELB)	\bANSELB
 Lab3.X	PORTB switched to digital (ANSELB)	\bANSELB
@@ -22,19 +22,19 @@ Lab7.X	ADC interrupt enabled (ADIE)	\bADIE\b
 Lab7.X	Global interrupts enabled (GIE)	\bGIE\b
 Lab8.X	DHT11 data buffer (dht11_data)	dht11_data
 Lab8.X	Checksum verified	checksum|\bsum\b
-Lab9.X	Timer1 used for echo timing (T1CON/TMR1)	\bT1CON\b|\bTMR1
+Lab9.X	Timer1 used for echo timing (T1CON/TMR1)	\bT1CON|\bTMR1
 Lab9.X	Trigger pulse generated	TRIG|trigger
 Lab10.X	PWM period set (PR2)	\bPR2\b
-Lab10.X	CCP1 configured for PWM (CCP1CON)	\bCCP1CON\b
+Lab10.X	CCP1 configured for PWM (CCP1CON)	\bCCP1CON
 Lab10.X	Duty cycle written (CCPR1L)	\bCCPR1L\b
-Lab10.X	Timer2 configured (T2CON)	\bT2CON\b
-Lab11.X	MSSP configured for I2C (SSPCON1)	\bSSP1?CON1\b
+Lab10.X	Timer2 configured (T2CON)	\bT2CON
+Lab11.X	MSSP configured for I2C (SSPCON1)	\bSSP1?CON1
 Lab11.X	I2C baud rate set (SSPADD)	\bSSP1?ADD\b
 Lab11.X	I2C data buffer used (SSPBUF)	\bSSP1?BUF\b
 PracticalMidterm.X	Reset vector psect (resetVec)	resetVec
 PracticalMidterm.X	Interrupt vector at 0x0008 / INT0IF handled	intVec|0x0008|INT0IF
 PracticalMidterm.X	RAM test uses indirect addressing (lfsr)	\blfsr\b|\bLFSR\b
-PracticalMidterm.X	Oscillator configured (OSCCON)	\bOSCCON\b
+PracticalMidterm.X	Oscillator configured (OSCCON)	\bOSCCON
 Lab13.X	Majority vote compares with cpfseq	\bcpfseq\b|\bCPFSEQ\b
 Lab13.X	Voted timer value exported (_tmr_voted)	_tmr_voted
 Lab13.X	Checksum routine exported (_chk_sum)	_chk_sum
@@ -47,7 +47,7 @@ Lab15.X	Overrun counter exported (_ex_overruns)	_ex_overruns
 Lab15.X	10 Hz task entry exported (_ex_run_10hz)	_ex_run_10hz
 Lab15.X	Heartbeat toggled with btg	\bbtg\b|\bBTG\b
 Lab16.X	Baud rate generator set (SPBRG)	\bSPBRG
-Lab16.X	Receiver enabled (RCSTA)	\bRCSTA1?\b
+Lab16.X	Receiver enabled (RCSTA)	\bRCSTA1?
 Lab16.X	Overrun error handled (OERR)	\bOERR\b
 Lab16.X	Ring buffer head index (rx_head)	rx_head|\bhead\b
 Lab16.X	Shared state declared volatile	\bvolatile\b
