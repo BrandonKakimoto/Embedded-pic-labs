@@ -28,3 +28,6 @@ l.obj
 # OS noise
 .DS_Store
 Thumbs.db
+
+# CI reports (artifacts, never committed)
+ci-report-*.json

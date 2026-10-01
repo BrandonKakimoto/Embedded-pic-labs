@@ -7,6 +7,7 @@ CPU=18F46K22
 SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
 fail=0
 details=""
+report=""
 
 {
   echo "## Compile results"
@@ -77,6 +78,8 @@ for proj in *.X; do
     echo "::error file=$proj::$proj failed to build: ${first:-see log}"
   fi
   echo "| \`$proj\` | $result | $warnings | ${prog:-–} | ${data:-–} | ${cfg:-–} | $hex |" >> "$SUMMARY"
+  [ -n "$report" ] && report="$report,"
+  report="$report\"$proj\":{\"compiled\":$([ "$result" = PASS ] && echo true || echo false),\"warnings_own\":${warnings:-0},\"warnings_all\":${allw:-0},\"program_pct\":\"${prog:-}\",\"data_pct\":\"${data:-}\",\"hex_bytes\":$([ -f "$proj/firmware.hex" ] && wc -c < "$proj/firmware.hex" | tr -d ' ' || echo 0)}"
   echo "::endgroup::"
   rm -f "$log"
 done
@@ -88,4 +91,5 @@ done
   echo
   echo "Warnings are listed under **Annotations** above. A PASS means the project assembles/compiles and links; it says nothing about behavior on the board."
 } >> "$SUMMARY"
+echo "{\"kind\":\"build\",\"sha\":\"${GITHUB_SHA:-}\",\"run\":\"${GITHUB_RUN_ID:-}\",\"ok\":$([ $fail -eq 0 ] && echo true || echo false),\"labs\":{$report}}" > ci-report-build.json
 exit $fail

@@ -1,0 +1,71 @@
+# Lab-specific checks, matched against comment-stripped code in student-owned files.
+# Format: LabDir<TAB>id<TAB>kind<TAB>regex<TAB>message      kind = missing (warn if absent) | found (warn where present)
+# These are the mistakes this particular lab produces; the generic lint (pic-lint.sh) covers PIC-wide ones.
+Lab2.X	L2-pll	found	PLLEN\s*=\s*1	The 64 MHz PLL has been unreliable on the lab boards this term (delays drift, random lockups). Run at 16 MHz: leave PLLEN off and set _XTAL_FREQ 16000000.
+Lab2.X	L2-xtal	found	_XTAL_FREQ\s+(64000000|32000000|8000000|4000000|1000000)	_XTAL_FREQ must match the clock you actually set in OSCCON (16000000 for the 16 MHz HFINTOSC), or every __delay_ms is the wrong length.
+Lab2.X	L2-anselb	missing	\bANSELB	RB4 (the button) is on PORTB, which wakes up ANALOG because PBADEN=ON. Without ANSELB cleared the button reads 0 forever, i.e. always pressed.
+Lab2.X	L2-patterns	found	dicePatterns\s*\[\s*6\s*\]\s*=\s*\{\s*(0x00\s*,\s*){5}0x00	The dice LED pattern table is still all 0x00, so no die face can ever light.
+Lab2.X	L2-seed	missing	\bTMR0L\b|\bsrand\s*\(	The random seed must come from Timer0 at the moment of the press (TMR0L into srand). A fixed seed rolls the same sequence every boot.
+Lab2.X	L2-debounce	missing	__delay_ms\s*\(\s*[2-5][0-9]\s*\)	No ~30 ms debounce delay found. One physical press will register as several rolls.
+Lab3.X	L3-pgc	found	\b(TRISB|LATB)\s*=\s*(0[xX][0-9A-Fa-f]+|[0-9]+)\s*;	A whole-register write to TRISB/LATB also drives RB6/RB7, which are PGC/PGD. You can lose the ability to program the board. Mask bits 6-7.
+Lab3.X	L3-xtal	found	_XTAL_FREQ\s+(64000000|32000000|8000000|4000000|1000000)	_XTAL_FREQ must match OSCCON (16000000 at 16 MHz). The 64 MHz PLL has been unreliable this term; a mismatch is why the light timing is off.
+Lab3.X	L3-anseld	missing	\bANSELD	PORTD LEDs: ANSELD must be cleared or the pins stay analog.
+Lab4.X	L4-pgc	found	\b(TRISB|LATB)\s*=\s*(0[xX][0-9A-Fa-f]+|[0-9]+)\s*;	A whole-register write to TRISB/LATB also drives RB6/RB7 (PGC/PGD). Mask bits 6-7 as in Lab 3.
+Lab4.X	L4-segtable	found	(0xDF\s*,\s*){9}0xDF	The sevenSeg table is still all 0xDF, so every digit shows the same pattern.
+Lab4.X	L4-cathode	found	0x3F\s*,\s*0x06\s*,\s*0x5B	This is a common-CATHODE segment table (active-high). The kit display is common-ANODE: segments light on 0, so the table is the inverse (0 shows as 0xC0/0xDF-style values). Hours have been lost to this.
+Lab4.X	L4-xtal	found	_XTAL_FREQ\s+(64000000|32000000|8000000|4000000|1000000)	_XTAL_FREQ must match OSCCON (16000000 at 16 MHz) or the countdown timing is wrong.
+Lab4.X	L4-rc5	missing	0x20	RC5 is the S2 input on the same port as the segments. Writing all of LATC disturbs it; mask with 0x20.
+Lab4.X	L4-re0	missing	\bANSELE|\bRE0\b	The pedestrian button is RE0. Without ANSELE cleared it reads 0; without reading RE0 the pedestrian request never happens.
+Lab5p1.X	L5a-ansel	missing	\bANSELA|\bANSELD	The LCD pins live on PORTA/PORTD; both ANSELA and ANSELD must be cleared or the LCD shows nothing.
+Lab5p1.X	L5a-include-c	found	#include\s*"LCD\.c"	Include LCD.h, not LCD.c. CI compiles LCD.c as its own file, so including it gives duplicate symbols.
+Lab5p1.X	L5a-lcdinit	missing	LCD_[Ii]nit\s*\(	The LCD is never initialised (LCD_init). The provided driver needs it before any write.
+Lab5p2.X	L5b-segtable	found	(0x7F\s*,\s*){8}0x7F	The 7-segment table is still all 0x7F.
+Lab5p2.X	L5b-bit7	found	\b(TRISB|TRISC)\s*=\s*0(x00)?\s*;	TRISB/TRISC = 0 also takes RB7/RC7. The lab says preserve bit 7: clear only bits 0-6.
+Lab5p2.X	L5b-digits	missing	LATD4|LATD5|\bRD4\b|\bRD5\b|LATD\s*(\||&|=)	The digit-select lines RD4/RD5 are never driven, so multiplexing cannot show both digits.
+Lab5p2.X	L5b-cathode	found	0x3F\s*,\s*0x06\s*,\s*0x5B	Common-cathode table on a common-anode display: segments light on 0 here, so invert the table.
+Lab5p2.X	L5b-split	missing	/\s*10|%\s*10	No tens/ones split (/10 and %10) found; the two digits cannot be derived from the count.
+Lab6.X	L6-ra0analog	found	\bANSELA\s*=\s*0(x00)?\s*;	ANSELA = 0 makes RA0 DIGITAL, and the ADC then reads a stuck value. RA0 must stay analog (ANSELAbits.ANSA0 = 1) while the rest is digital.
+Lab6.X	L6-trisa0	missing	TRISA(bits\.TRISA0)?\s*(=|\|=)	RA0 must be an INPUT (TRISAbits.TRISA0 = 1) for the ADC to sample it.
+Lab6.X	L6-go	missing	\bGO\b|GO_nDONE|GODONE	No conversion is ever started (ADCON0bits.GO = 1).
+Lab6.X	L6-wait	missing	while\s*\(\s*ADCON0bits\.(GO|GO_nDONE|GODONE)|\bADIF\b	Nothing waits for the conversion to finish before reading the result. Poll GO (or ADIF) first.
+Lab6.X	L6-adresl	missing	\bADRESL\b	ADCON2 is right-justified, so the 10-bit result is ADRESH:ADRESL. ADRESH alone is only the top two bits.
+Lab7.X	L7-adif	missing	ADIF\s*=\s*0	ADIF is never cleared in the ISR, so the interrupt re-enters forever.
+Lab7.X	L7-peie	missing	\bPEIE\b	The ADC is a peripheral interrupt: PEIE must be set as well as GIE, or the ISR never runs.
+Lab7.X	L7-volatile	missing	\bvolatile\b	The ADC result shared between the ISR and main should be volatile, or the compiler may cache it in main's loop.
+Lab7.X	L7-firstgo	missing	GO(_nDONE|DONE)?\s*=\s*1	The FIRST conversion must be started in main; the ISR only restarts the next one.
+Lab8.X	L8-input	missing	TRIS\w*\s*(=\s*1\b|\|=)	The DHT11 data line must be switched to INPUT after the start pulse (TRISxbits = 1), or you read your own driven level.
+Lab8.X	L8-start	missing	__delay_ms\s*\(\s*(18|19|2[0-9])\s*\)	The DHT11 start signal holds the line low for at least 18 ms. No such delay found.
+Lab8.X	L8-us	missing	__delay_us\s*\(	Bit timing on the DHT11 is in microseconds (26-28 us = 0, 70 us = 1). Millisecond delays cannot read it.
+Lab8.X	L8-checksum	missing	&\s*0xFF	The checksum is (b0+b1+b2+b3) & 0xFF compared with byte 4; the & 0xFF is what makes it match.
+Lab9.X	L9-trig10	missing	__delay_us\s*\(\s*1[0-9]\s*\)	The ultrasonic trigger pulse is 10 us (__delay_us(10)). No such pulse found.
+Lab9.X	L9-tmrclr	missing	\bTMR1H\b|\bTMR1L\b	Timer1 (TMR1H/TMR1L) is never cleared before timing the echo, so readings accumulate.
+Lab9.X	L9-overflow	missing	\bTMR1IF\b	No overflow check (TMR1IF). If the echo never arrives, the loop spins forever and the LCD freezes.
+Lab9.X	L9-tmron	missing	\bTMR1ON\b	Timer1 is never turned on (and off) around the echo pulse.
+Lab9.X	L9-convert	missing	/\s*58|/\s*29|0\.034|0\.017	No distance conversion found: cm = echo microseconds / 58, or Timer1 count / 29 with the 1:8 prescaler at 16 MHz (2 us per count).
+Lab10.X	L10-dc1b	missing	DC1B	The duty cycle is 10 bits: CCPR1L holds the top 8, CCP1CONbits.DC1B the low 2. Without DC1B the resolution is 8 bits and the table values are wrong.
+Lab10.X	L10-rc2	missing	TRISC(bits\.TRISC2)?\s*(=|&=)	RC2 must be an OUTPUT or the PWM never reaches the pin.
+Lab10.X	L10-tmr2on	missing	\bTMR2ON\b	Timer2 is never started (TMR2ON), so there is no PWM.
+Lab10.X	L10-anselb	missing	\bANSELB	RB4 (the button) is on analog-default PORTB; without ANSELB it always reads 0.
+Lab10.X	L10-debounce	missing	__delay_ms\s*\(\s*[2-5][0-9]\s*\)	No ~30 ms debounce; each press will step the duty cycle several times.
+Lab11.X	L11-smp	missing	\bSMP\b	SSPSTATbits.SMP = 1 (slew-rate control off) for 100 kHz. Without it the bus timing is for 400 kHz.
+Lab11.X	L11-tris	missing	TRISC(bits\.TRISC[34])?\s*(=|\|=)	RC3 (SCL) and RC4 (SDA) must BOTH be configured as INPUTS for the MSSP to drive them.
+Lab11.X	L11-anselc	missing	\bANSELC	SCL/SDA on RC3/RC4 must be digital (ANSELC cleared).
+Lab11.X	L11-sen	missing	\bSEN\b	No start condition (SSPCON2bits.SEN).
+Lab11.X	L11-pen	missing	\bPEN\b	No stop condition (SSPCON2bits.PEN); the bus is never released.
+Lab11.X	L11-rcen	missing	\bRCEN\b	No receive enable (RCEN); nothing can be read from the sensor.
+Lab11.X	L11-ack	missing	\bACKEN\b|\bACKDT\b	No ACK/NACK handling (ACKDT/ACKEN) after a received byte.
+Lab11.X	L11-wait	missing	0x1F	I2C_wait must spin while (SSPCON2 & 0x1F) or R_nW is set; the 0x1F mask is missing.
+Lab13.X	L13-global	missing	\bGLOBAL\b|\bglobal\b	_tmr_voted and _chk_sum must be declared GLOBAL in fault.S or the C executive cannot link to them.
+Lab13.X	L13-return	missing	\breturn\b	Routines called from C must end in return.
+Lab13.X	L13-add	missing	\baddwf\b|\bADDWF\b	The checksum needs an add (addwf) across the block.
+Lab14.X	L14-global	missing	\bGLOBAL\b|\bglobal\b	_popcount_asm and the delay must be GLOBAL for the C harness to call them.
+Lab14.X	L14-nop	missing	\bnop\b|\bNOP\b	A cycle-exact 400-cycle delay almost always needs NOPs to pad the count; none found.
+Lab14.X	L14-return	missing	\breturn\b	Routines called from C must end in return.
+Lab15.X	L15-global	missing	\bGLOBAL\b|\bglobal\b	_frame_tick, _ex_overruns and _ex_run_10hz must be GLOBAL for lab15.c to see them.
+Lab15.X	L15-countdown	missing	\bdecfsz\b|\bDECFSZ\b	The c10/c100 countdowns are decfsz loops; none found.
+Lab15.X	L15-overrun	missing	\bincf\b|\bINCF\b|\binfsnz\b|\bINFSNZ\b	_ex_overruns must be incremented when a frame overruns; no incf found.
+Lab16.X	L16-txsta	missing	TXSTA	The transmitter is never configured (TXSTA: TXEN, BRGH).
+Lab16.X	L16-rcie	missing	\bRC1?IE\b	The receive interrupt (RCIE) is never enabled; the ring buffer never fills.
+Lab16.X	L16-cren	missing	\bCREN\b	Clearing then re-setting CREN is how an overrun error (OERR) is cleared. No CREN found.
+Lab16.X	L16-trisc	missing	TRISC(bits\.TRISC[67])?\s*(=|\|=)	TRISC6 and TRISC7 must be set for the EUSART pins.
+Lab16.X	L16-anselc	missing	\bANSELC	RC6/RC7 must be digital (ANSELC cleared).

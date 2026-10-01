@@ -26,6 +26,15 @@ jobs:
       - name: Hygiene, provided files, lint, authorship
         run: bash .github/scripts/repo-checks.sh
 
+      - name: Upload checks report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-report-checks-run${{ github.run_number }}
+          path: ci-report-checks.json
+          if-no-files-found: ignore
+          retention-days: 90
+
   build:
     name: Compile
     runs-on: ubuntu-latest
@@ -42,6 +51,15 @@ jobs:
 
       - name: Compile every project (xc8-cc -Wall / pic-as)
         run: bash .github/scripts/ci-build.sh
+
+      - name: Upload build report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-report-build-run${{ github.run_number }}
+          path: ci-report-build.json
+          if-no-files-found: ignore
+          retention-days: 90
 
       - name: Upload firmware (download from this run's Artifacts to flash a CI-built hex)
         if: always()

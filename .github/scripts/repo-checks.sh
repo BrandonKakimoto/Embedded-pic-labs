@@ -8,6 +8,7 @@ set -u
 SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 fail=0
+REQ_TSV=$(mktemp); LINT_TSV=$(mktemp); export LINT_TSV
 
 # ---- 1. hygiene ----
 echo "::group::Hygiene"
@@ -58,6 +59,7 @@ if [ -f .github/requirements.txt ]; then
     out=$(bash "$HERE/requirements.sh" "$proj" .github/requirements.txt .github/provided.sha256); nf=$?
     tot=$(echo "$out" | grep -c .); ok=$((tot-nf))
     echo "$proj: $ok/$tot"
+    printf '%s\t%s\t%s\t%s\n' "$proj" "$ok" "$tot" "$(echo "$out" | sed -n 's/^FAIL\t//p' | tr '\n' ';')" >> "$REQ_TSV"
     { echo "**\`$proj\`** — $ok of $tot detected"; echo; echo "$out" | sed -E 's/^PASS	/- [x] /; s/^FAIL	/- [ ] /'; echo; } >> "$SUMMARY"
     [ "$nf" -gt 0 ] && echo "::notice file=$proj::$proj: $ok of $tot required structures detected so far (see the run summary for the checklist)."
   done
@@ -87,4 +89,23 @@ for proj in *.X; do
   echo "| \`$proj\` | $n | ${authors:-–} |" >> "$SUMMARY"
 done
 echo "::endgroup::"
+
+# ---- 5. machine-readable report (harvested by scripts/harvest_ci.sh) ----
+{
+  echo '{"kind":"checks","sha":"'"${GITHUB_SHA:-}"'","run":"'"${GITHUB_RUN_ID:-}"'","hygiene_fail":'"$( [ -n "$junk" ] && echo true || echo false )"',"frozen_modified":'"$(echo "$provided_note" | grep -c FROZEN)"',"provided_modified":'"$(echo "$provided_note" | grep -c 'provided - modified')"',"labs":{'
+  first=1
+  for proj in *.X; do
+    [ -d "$proj" ] || continue
+    r=$(grep -P "^$proj\t" "$REQ_TSV" | head -1); l=$(grep -P "^$proj\t" "$LINT_TSV" | head -1)
+    ok=$(echo "$r" | cut -f2); tot=$(echo "$r" | cut -f3); miss=$(echo "$r" | cut -f4)
+    lf=$(echo "$l" | cut -f2); td=$(echo "$l" | cut -f3); ids=$(echo "$l" | cut -f4)
+    n=$(git rev-list --count HEAD -- "$proj" 2>/dev/null || echo 0)
+    authors=$(git log --format='%an' -- "$proj" 2>/dev/null | grep -vE '^(JPL11|github-actions)' | sort | uniq -c | sort -rn | awk '{c=$1; $1=""; printf "%s:%d;", substr($0,2), c}')
+    [ $first -eq 1 ] || echo ','; first=0
+    printf '"%s":{"req_ok":%s,"req_total":%s,"req_missing":"%s","lint_findings":%s,"todos":%s,"lint_ids":"%s","commits":%s,"authors":"%s"}' \
+      "$proj" "${ok:-0}" "${tot:-0}" "$(echo "$miss" | sed 's/"/\\"/g')" "${lf:-0}" "${td:-0}" "${ids:-}" "$n" "$(echo "$authors" | sed 's/"/\\"/g')"
+  done
+  echo '}}'
+} > ci-report-checks.json
+rm -f "$REQ_TSV" "$LINT_TSV"
 exit $fail
