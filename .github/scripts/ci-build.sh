@@ -38,9 +38,10 @@ count_own_warnings() {  # warnings not in provided files, one per file:line
 
 for proj in *.X; do
   [ -d "$proj" ] || continue
-  if ! ls "$proj"/*.c "$proj"/*.S >/dev/null 2>&1; then
+  if ! ls "$proj"/*.c >/dev/null 2>&1 && ! ls "$proj"/*.S >/dev/null 2>&1; then
     echo "::warning file=$proj::$proj has no .c or .S source files yet; skipped."
-    echo "| \`$proj\` | skipped (no sources) | – | – | – | – | – |" >> "$SUMMARY"; continue
+    echo "| \`$proj\` | skipped (no sources) | – | – | – | – | – |" >> "$SUMMARY"
+    [ -n "$report" ] && report="$report,"; report="$report\"$proj\":{\"skipped\":true}"; continue
   fi
   log=$(mktemp)
   echo "::group::Building $proj"
