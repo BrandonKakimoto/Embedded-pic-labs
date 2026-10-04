@@ -38,6 +38,10 @@ the start of each lab session.
      static score looks for, matched in code, not comments), counts the
      `TODO` markers you have left, and shows who has committed to each lab.
 
+   Every lab folder has a `CI_CHECKS.md` that lists exactly what the run
+   looks for in that lab: the required structures and the mistakes that
+   lab is known for. Read it before you start.
+
    **A green check is required but does not by itself mean the lab is
    correct** — behavior is graded on hardware in lab. Warnings never
    block the check, but read them: most of them are bugs you have not
