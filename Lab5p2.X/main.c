@@ -1,8 +1,8 @@
 /*
  * File:   main.c
- * Author: <your names here>
+ * Author: Brandon Kakimoto & Jason Lopez
  *
- * Lab 5 Part 2 - Two-Digit Seven-Segment Seconds Counter (Common Anode)
+ * Lab 5 Part 2 - Two-Digit Seven-Segment Seconds Counter (Common Cathode)
  * ECE 3301L - Introduction to Microcontrollers Laboratory
  *
  * Description:
@@ -18,8 +18,8 @@
  *   RD5 - Digit 2 enable (HIGH = ON, through 1K to COM pin)
  *
  * Wiring:
- *   RD4 - [1K] - Digit 1 COM (anode)
- *   RD5 - [1K] - Digit 2 COM (anode)
+ *   RD4 - [1K] - Digit 1 COM (cathode)
+ *   RD5 - [1K] - Digit 2 COM (cathode)
  *   Segment pins - [330 ohm] - RBx / RCx
  *
  * Multiplexing:
@@ -46,31 +46,33 @@ static const uint8_t sevenSeg[10] = {
     0x7D, // 6 (Segments a,c,d,e,f,g)
     0x07, // 7 (Segments a,b,c)
     0x7F, // 8 (All segments)
-    0x67  // 9 (Segments a,b,c,d,f,g)
+    0x6F  // 9 (Segments a,b,c,d,f,g)
 };
 
-#define SEG_BLANK 0x7F  /* All segments OFF */
+#define SEG_BLANK 0x00  /* All segments OFF */
 
 static void init(void) {
-    OSCCONbits.IRCF = 0b111; // 16MHz HFINTOSC
-    OSCCONbits.SCS = 0b10;
+    OSCCONbits.IRCF = 0b111;     // 16MHz HFINTOSC
+    OSCCONbits.SCS = 0b10;       // Use the internal oscillator as the system clock
 
-    ANSELB = 0x00; // digitize PORTB PORTC PORTD
-    ANSELC = 0x00;
-    ANSELD = 0x00;
+    // ANSELB/C/D = digital
+    ANSELB = 0x00; 
+    ANSELC = 0x00;        
+    ANSELD = 0x00;        
 
+    // RB0-RB6 outputs (preserve RB7), latches cleared
+    LATB &= 0x80;        // Clears RB0-RB6 first so no segments flash at the start
+    TRISB &= 0x80;       // 0 corresponds to output. Sets RB0-RB6 to outputs and keeps RB7 as it was
 
-     LATB &= 0x80; // RB0-RB6 outputs preserve RB7
-     TRISB &= 0x80;
+    // RC0-RC6 outputs (preserve RC7), latches cleared
+    LATC &= 0x80;        // Clears RC0-RC6 first so no segments flash at the start
+    TRISC &= 0x80;       // 0 corresponds to output. Sets RC0-RC6 to outputs and keeps RC7 as it was
 
-     LATC &= 0x80;// RC0-RC6 outputs preserve RC7
-     TRISC &= 0x80;
-
+    // RD4, RD5 outputs, both digits OFF initially
     LATDbits.LATD4 = 0;         // Digit 1 OFF     
     LATDbits.LATD5 = 0;         // Digit 2 OFF
     TRISDbits.TRISD4 = 0;       // Sets RD4 to output
     TRISDbits.TRISD5 = 0;       // Sets RD5 to output
-    
 }
 
 /**
@@ -81,7 +83,7 @@ static void init(void) {
  */
 static void display_one_second(uint8_t tens, uint8_t ones) {
     //  for 100 cycles:
-    for (uint8_t i = 0; i< 100; i++) {
+    for (uint8_t i = 0; i < 100; i++) {
         //   1. Turn digit 2 enable OFF
         LATDbits.LATD5 = 0;
         
@@ -101,30 +103,30 @@ static void display_one_second(uint8_t tens, uint8_t ones) {
         //   6. Turn digit 2 enable ON, wait ~5 ms
         LATDbits.LATD5 = 1;
         __delay_ms(5);
-        
     }
     // Afterwards turn both digits off to prevent ghosting.
     LATDbits.LATD4 = 0;
     LATDbits.LATD5 = 0;
-    
 }
 
 void main(void) {
     init();
 
-    uint8_t seconds = 0;
+    uint8_t seconds = 0;        // Start counting from 0
 
     while (1) {
-        uint8_t tens = seconds/10; //splits seconds into tens and ones 
-        uint8_t ones = seconds%10;
+        // split seconds into tens and ones digits,
+        // call display_one_second(), then increment seconds
+        // and wrap 59 -> 0
+        uint8_t tens = seconds / 10; 
+        uint8_t ones = seconds % 10;
         
-        display_one_second(tens, ones);//call function
+        display_one_second(tens, ones);        // Show both digits for ~1 second
         
-        seconds ++; // increment seconds
-        if (seconds > 59){
-            seconds =0; 
+        seconds++;        // Add one second
+        
+        if (seconds > 59) {        // After 59, wrap back to 0
+            seconds = 0; 
         }
-        
-      
     }
 }
