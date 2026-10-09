@@ -7,7 +7,7 @@
  *
  * Description:
  *   Counts from 00 to 59, then resets to 00.
- *   Uses two common-anode 7-segment displays with digit multiplexing.
+ *   Uses two common-cathode 7-segment displays with digit multiplexing. (UPDATED FROM COMMON-ANODE TO COMMON-CATHODE)
  *
  * Pin Assignments:
  *   PORTB (RB0-RB6) - Segments a-g for DIGIT 1 (tens)
@@ -33,7 +33,7 @@
 
 #define _XTAL_FREQ 16000000UL   // 16 MHz HFINTOSC
 
-/* 7-Segment Patterns (Common Anode: 0=ON, 1=OFF)
+/* 7-Segment Patterns (Common CATHODE: 1=ON, 0=OFF)
  *   Bit mapping: bit6=g, bit5=f, bit4=e, bit3=d, bit2=c, bit1=b, bit0=a
  * Digit 0 is done for you - work out the other nine. */
 static const uint8_t sevenSeg[10] = {
