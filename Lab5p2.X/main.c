@@ -115,9 +115,16 @@ void main(void) {
     uint8_t seconds = 0;
 
     while (1) {
-        // TODO: split seconds into tens and ones digits,
-        //       call display_one_second(), then increment seconds
-        //       and wrap 59 -> 0
-        (void)seconds;
+        uint8_t tens = seconds/10; //splits seconds into tens and ones 
+        uint8_t ones = seconds%10;
+        
+        display_one_second(tens, ones);//call function
+        
+        seconds ++; // increment seconds
+        if (seconds > 59){
+            seconds =0; 
+        }
+        
+      
     }
 }
