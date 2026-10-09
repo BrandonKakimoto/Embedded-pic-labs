@@ -34,7 +34,8 @@
 
 static void init(void) {
     // TODO: 16 MHz HFINTOSC (OSCCONbits.IRCF / SCS)
-
+    OSCCONbits.IRCF = 0b111;
+    OSCCONbits.SCS = 0b10;
     // TODO: Disable analog on PORTA and PORTD (the LCD pins must be digital)
 }
 
