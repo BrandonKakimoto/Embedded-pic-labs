@@ -37,7 +37,7 @@ static void init(void) {
     OSCCONbits.IRCF = 0b111;
     OSCCONbits.SCS = 0b10;
    ANSELA =0x00;
-   ANSElD = 0x00;       //  Disable analog on PORTA and PORTD (the LCD pins must be digital)
+   ANSELD = 0x00;       //  Disable analog on PORTA and PORTD (the LCD pins must be digital)
 }
 
 void main(void) {
@@ -74,5 +74,6 @@ void main(void) {
         if (counter > 15) {
             counter = 0;
             round++;
+        }
     }
 }
