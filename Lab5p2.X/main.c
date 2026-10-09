@@ -69,7 +69,7 @@ static void init(void) {
     LATDbits.LATD4 = 0;// RD4, RD5 outputs both off initially 
     LATDbits.LATD5 = 0;
     TRISDbits.TRISD4 = 0;
-    TRISBbits. TRISB = 0; // 
+    TRISBbits.TRISB = 0; // 
     
 }
 
