@@ -1,6 +1,6 @@
 /*
  * File:   main.c
- * Author: <your names here>
+ * Author: Jason Lopez & Brandon Kakimoto
  *
  * Lab 5 Part 1 - LCD Interface + Counter (0-15) + Round
  * ECE 3301L - Introduction to Microcontrollers Laboratory
@@ -34,10 +34,12 @@
 
 static void init(void) {
     //  16 MHz HFINTOSC (OSCCONbits.IRCF / SCS)
-    OSCCONbits.IRCF = 0b111;
-    OSCCONbits.SCS = 0b10;
-   ANSELA =0x00;
-   ANSELD = 0x00;       //  Disable analog on PORTA and PORTD (the LCD pins must be digital)
+    OSCCONbits.IRCF = 0b111;        // Select the 16 MHz internal oscillator
+    OSCCONbits.SCS = 0b10;          // Use the internal oscillator as the system clock
+
+    //  Disable analog on PORTA and PORTD (the LCD pins must be digital)
+    ANSELA =0x00;
+    ANSELD = 0x00;       
 }
 
 void main(void) {
@@ -47,13 +49,16 @@ void main(void) {
     int16_t counter = 0;
     int16_t round = 0;
 
-    LCD_cursor_set (1,1); // static label counter 
-    LCD_write_string ("Counter");
+    //   Write the static labels once:
+    //   line 1: "Counter:"
+    //   line 2: "Round:"
     
-    LCD_cursor_set(2,1); // static label round 
-    LCD_write_string("Round");
+    LCD_cursor_set (1, 1); // Static label counter 
+    LCD_write_string ("Counter:");
     
-    
+    LCD_cursor_set(2, 1); // Static label round 
+    LCD_write_string("Round:");
+
     while (1) {
         // Each second:
         //   1. Move the cursor after "Counter:" and print counter
