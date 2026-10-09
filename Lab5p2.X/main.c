@@ -52,13 +52,25 @@ static const uint8_t sevenSeg[10] = {
 #define SEG_BLANK 0x7F  /* All segments OFF */
 
 static void init(void) {
-    // TODO: 16 MHz HFINTOSC
+  OSCCONbits.IRCF = 0b111; // 16MHz HFINTOSC
+OSCCONbits.SCS = 0b10;
 
-    // TODO: ANSELB/C/D = digital
+ANSELB = 0x00; // digitize PORTB PORTC PORTD
+ANSELC = 0x00;
+ANSELD = 0x00;
 
-    // TODO: RB0-RB6 outputs (preserve RB7), latches cleared
-    // TODO: RC0-RC6 outputs (preserve RC7), latches cleared
-    // TODO: RD4, RD5 outputs, both digits OFF initially
+
+ LATB &= 0x80; // RB0-RB6 outputs preserve RB7
+ TRISB &= 0x80;
+ 
+ LATC &= 0x80;// RC0-RC6 outputs preserve RC7
+ TRISC &= 0x80;
+   
+LATDbits.LATD4 = 0;// RD4, RD5 outputs both off initially 
+LATDbits.LATD5 = 0;
+TRISDbits.TRISD4 = 0;
+TRISBbits. TRISB = 0; // 
+    
 }
 
 /**
