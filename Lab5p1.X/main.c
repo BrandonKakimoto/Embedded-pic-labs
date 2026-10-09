@@ -55,14 +55,24 @@ void main(void) {
     
     
     while (1) {
-        // TODO: Each second:
+        // Each second:
         //   1. Move the cursor after "Counter:" and print counter
         //      (LCD_write_variable with a 2-character width)
+        LCD_cursor_set(1, 10);
+        LCD_write_variable(counter, 2);
+        
         //   2. Move the cursor after "Round:" and print round
+        LCD_cursor_set(2, 8);
+        LCD_write_variable(round, 2);
+        
         //   3. Delay 1 second
+        __delay_ms(1000);
+        
         //   4. Increment counter; when it passes 15, reset it to 0
         //      and increment round
-        (void)counter;
-        (void)round;
+        counter++;
+        if (counter > 15) {
+            counter = 0;
+            round++;
     }
 }
