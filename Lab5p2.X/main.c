@@ -14,8 +14,8 @@
  *     RB0=a, RB1=b, RB2=c, RB3=d, RB4=e, RB5=f, RB6=g
  *   PORTC (RC0-RC6) - Segments a-g for DIGIT 2 (ones)
  *     RC0=a, RC1=b, RC2=c, RC3=d, RC4=e, RC5=f, RC6=g
- *   RD4 - Digit 1 enable (HIGH = ON, through 1K to COM pin)
- *   RD5 - Digit 2 enable (HIGH = ON, through 1K to COM pin)
+ *   RD4 - Digit 1 enable (LOW = ON, through 1K to COM pin)
+ *   RD5 - Digit 2 enable (LOW = ON, through 1K to COM pin)
  *
  * Wiring:
  *   RD4 - [1K] - Digit 1 COM (cathode)
@@ -69,8 +69,8 @@ static void init(void) {
     TRISC &= 0x80;       // 0 corresponds to output. Sets RC0-RC6 to outputs and keeps RC7 as it was
 
     // RD4, RD5 outputs, both digits OFF initially
-    LATDbits.LATD4 = 0;         // Digit 1 OFF     
-    LATDbits.LATD5 = 0;         // Digit 2 OFF
+    LATDbits.LATD4 = 1;         // Digit 1 OFF     
+    LATDbits.LATD5 = 1;         // Digit 2 OFF
     TRISDbits.TRISD4 = 0;       // Sets RD4 to output
     TRISDbits.TRISD5 = 0;       // Sets RD5 to output
 }
@@ -85,28 +85,28 @@ static void display_one_second(uint8_t tens, uint8_t ones) {
     //  for 100 cycles:
     for (uint8_t i = 0; i < 100; i++) {
         //   1. Turn digit 2 enable OFF
-        LATDbits.LATD5 = 0;
+        LATDbits.LATD5 = 1;
         
         //   2. Put the tens pattern on PORTB (preserve RB7)
         LATB = (LATB & 0x80) | (sevenSeg[tens] & 0x7F);
         
         //   3. Turn digit 1 enable ON, wait ~5 ms
-        LATDbits.LATD4 = 1;
+        LATDbits.LATD4 = 0;
         __delay_ms(5);
         
         //   4. Turn digit 1 enable OFF
-        LATDbits.LATD4 = 0;
+        LATDbits.LATD4 = 1;
         
         //   5. Put the ones pattern on PORTC (preserve RC7)
         LATC = (LATC & 0x80) | (sevenSeg[ones] & 0x7F);
         
         //   6. Turn digit 2 enable ON, wait ~5 ms
-        LATDbits.LATD5 = 1;
+        LATDbits.LATD5 = 0;
         __delay_ms(5);
     }
     // Afterwards turn both digits off to prevent ghosting.
-    LATDbits.LATD4 = 0;
-    LATDbits.LATD5 = 0;
+    LATDbits.LATD4 = 1;
+    LATDbits.LATD5 = 1;
 }
 
 void main(void) {
