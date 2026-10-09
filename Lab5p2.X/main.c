@@ -52,24 +52,24 @@ static const uint8_t sevenSeg[10] = {
 #define SEG_BLANK 0x7F  /* All segments OFF */
 
 static void init(void) {
-  OSCCONbits.IRCF = 0b111; // 16MHz HFINTOSC
-OSCCONbits.SCS = 0b10;
+    OSCCONbits.IRCF = 0b111; // 16MHz HFINTOSC
+    OSCCONbits.SCS = 0b10;
 
-ANSELB = 0x00; // digitize PORTB PORTC PORTD
-ANSELC = 0x00;
-ANSELD = 0x00;
+    ANSELB = 0x00; // digitize PORTB PORTC PORTD
+    ANSELC = 0x00;
+    ANSELD = 0x00;
 
 
- LATB &= 0x80; // RB0-RB6 outputs preserve RB7
- TRISB &= 0x80;
- 
- LATC &= 0x80;// RC0-RC6 outputs preserve RC7
- TRISC &= 0x80;
-   
-LATDbits.LATD4 = 0;// RD4, RD5 outputs both off initially 
-LATDbits.LATD5 = 0;
-TRISDbits.TRISD4 = 0;
-TRISBbits. TRISB = 0; // 
+     LATB &= 0x80; // RB0-RB6 outputs preserve RB7
+     TRISB &= 0x80;
+
+     LATC &= 0x80;// RC0-RC6 outputs preserve RC7
+     TRISC &= 0x80;
+
+    LATDbits.LATD4 = 0;// RD4, RD5 outputs both off initially 
+    LATDbits.LATD5 = 0;
+    TRISDbits.TRISD4 = 0;
+    TRISBbits. TRISB = 0; // 
     
 }
 
@@ -80,16 +80,33 @@ TRISBbits. TRISB = 0; //
  * 100 cycles = ~1 second.
  */
 static void display_one_second(uint8_t tens, uint8_t ones) {
-    // TODO: for 100 cycles:
-    //   1. Turn digit 2 enable OFF
-    //   2. Put the tens pattern on PORTB (preserve RB7)
-    //   3. Turn digit 1 enable ON, wait ~5 ms
-    //   4. Turn digit 1 enable OFF
-    //   5. Put the ones pattern on PORTC (preserve RC7)
-    //   6. Turn digit 2 enable ON, wait ~5 ms
+    //  for 100 cycles:
+    for (uint8_t i = 0; i< 100; i++) {
+        //   1. Turn digit 2 enable OFF
+        LATDbits.LATD5 = 0;
+        
+        //   2. Put the tens pattern on PORTB (preserve RB7)
+        LATB = (LATB & 0x80) | (sevenSeg[tens] & 0x7F);
+        
+        //   3. Turn digit 1 enable ON, wait ~5 ms
+        LATDbits.LATD4 = 1;
+        __delay_ms(5);
+        
+        //   4. Turn digit 1 enable OFF
+        LATDbits.LATD4 = 0;
+        
+        //   5. Put the ones pattern on PORTC (preserve RC7)
+        LATC = (LATC & 0x80) | (sevenSeg[ones] & 0x7F);
+        
+        //   6. Turn digit 2 enable ON, wait ~5 ms
+        LATDbits.LATD5 = 1;
+        __delay_ms(5);
+        
+    }
     // Afterwards turn both digits off to prevent ghosting.
-    (void)tens;
-    (void)ones;
+    LATDbits.LATD4 = 0;
+    LATDbits.LATD5 = 0;
+    
 }
 
 void main(void) {
