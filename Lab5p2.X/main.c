@@ -66,10 +66,10 @@ static void init(void) {
      LATC &= 0x80;// RC0-RC6 outputs preserve RC7
      TRISC &= 0x80;
 
-    LATDbits.LATD4 = 0;// RD4, RD5 outputs both off initially 
-    LATDbits.LATD5 = 0;
-    TRISDbits.TRISD4 = 0;
-    TRISBbits.TRISB = 0; // 
+    LATDbits.LATD4 = 0;         // Digit 1 OFF     
+    LATDbits.LATD5 = 0;         // Digit 2 OFF
+    TRISDbits.TRISD4 = 0;       // Sets RD4 to output
+    TRISDbits.TRISD5 = 0;       // Sets RD5 to output
     
 }
 
