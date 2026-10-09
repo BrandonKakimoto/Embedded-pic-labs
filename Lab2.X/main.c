@@ -32,18 +32,18 @@ static const uint8_t dicePatterns[6] = {
 };
 
 static void init_clock_to_64MHz(void) {
-    // TODO: Select the 16 MHz HFINTOSC using OSCCONbits.IRCF
+    // Select the 16 MHz HFINTOSC using OSCCONbits.IRCF
     OSCCONbits.IRCF = 0b111;
 
-    // TODO: Select the internal oscillator block using OSCCONbits.SCS
+    // Select the internal oscillator block using OSCCONbits.SCS
     OSCCONbits.SCS = 0b00;
 
-    // TODO: Enable the 4x PLL (OSCTUNEbits.PLLEN) -> 64 MHz
+    // Enable the 4x PLL (OSCTUNEbits.PLLEN) -> 64 MHz
     OSCTUNEbits.PLLEN = 1;
 }
 
 static void init_timer0_free_running(void) {
-    // TODO: Configure Timer0 as a free-running 16-bit timer:
+    // Configure Timer0 as a free-running 16-bit timer:
     //   - internal clock (Fosc/4)
     //   - no prescaler
     //   - clear TMR0H/TMR0L, then turn the timer ON
@@ -59,16 +59,16 @@ static void init_timer0_free_running(void) {
 }
 
 static void init_io(void) {
-    // TODO: Make PORTC and PORTD outputs (dice LEDs) and clear their latches.
+    // Make PORTC and PORTD outputs (dice LEDs) and clear their latches.
     TRISC = 0x00; // Sets all PORTC pins as OUTPUTS (for Die #1 LEDs)
     TRISD = 0x00; // Sets all PORTD pins as OUTPUTS (for Die #2 LEDs)
     LATC  = 0x00; // Clears PORTC latch so Die #1 LEDs start off
     LATD  = 0x00; // Clears PORTD latch so Die #2 LEDs start off
 
-    // TODO: Make RB4 an input (button, active-low).
+    // Make RB4 an input (button, active-low).
     TRISBbits.TRISB4 = 1; // Sets pin RB4 as an INPUT (connected to S1 button)
 
-    // TODO: PBADEN=ON means PORTB<5:0> wake up as ANALOG pins
+    // PBADEN=ON means PORTB<5:0> wake up as ANALOG pins
     //       Force RB4 digital (ANSELB) or the button will always read 0
     ANSELBbits.ANSB4 = 0; // Disables analog mode on RB4, making it read digital inputs (0 or 1)
 
@@ -78,7 +78,7 @@ static void init_io(void) {
 }
 
 static uint8_t read_button_pressed(void) {
-    // TODO: return 1 while the button is pressed (remember: active-low)
+    // return 1 while the button is pressed (remember: active-low)
     if (PORTBbits.RB4 == 0) { // Returns 1 if RB4 is pressed and 0 if RB4 is unpressed
         return 1;
     } else {
@@ -87,12 +87,12 @@ static uint8_t read_button_pressed(void) {
 }
 
 static void debounce_press(void) {
-    // TODO: short delay (~30 ms) to ride out contact bounce
+    // short delay (~30 ms) to ride out contact bounce
     __delay_ms(30); // Pauses execution for 30 ms to let physical button contact vibrations settle down
 }
 
 static void wait_for_release(void) {
-    // TODO: block until the button is released, then debounce the release
+    // block until the button is released, then debounce the release
     while (PORTBbits.RB4 == 0) { // Creates a loop that stays active as long as RB4 is held low
         __delay_ms(10); // Forces the microcontroller to check the pin at a controlled rate
     }
@@ -105,7 +105,7 @@ void main(void) {
     init_timer0_free_running(); // Starts Timer0
 
     while (1) {
-        // TODO: When a (debounced) press is detected:
+        // When a (debounced) press is detected:
         if (read_button_pressed()) { // Checks if S1 button is pressed down
             debounce_press(); // Waits out mechanical contact bounce
 
