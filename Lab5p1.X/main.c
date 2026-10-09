@@ -33,10 +33,11 @@
 #define _XTAL_FREQ 16000000UL   // 16 MHz HFINTOSC
 
 static void init(void) {
-    // TODO: 16 MHz HFINTOSC (OSCCONbits.IRCF / SCS)
+    //  16 MHz HFINTOSC (OSCCONbits.IRCF / SCS)
     OSCCONbits.IRCF = 0b111;
     OSCCONbits.SCS = 0b10;
-    // TODO: Disable analog on PORTA and PORTD (the LCD pins must be digital)
+   ANSELA =0x00;
+   ANSElD = 0x00;       //  Disable analog on PORTA and PORTD (the LCD pins must be digital)
 }
 
 void main(void) {
@@ -46,10 +47,13 @@ void main(void) {
     int16_t counter = 0;
     int16_t round = 0;
 
-    // TODO: Write the static labels once:
-    //   line 1: "Counter:"
-    //   line 2: "Round:"
-
+    LCD_cursor_set (1,1); // static label counter 
+    LCD_write_string ("Counter");
+    
+    LCD_cursor_set(2,1); // static label round 
+    LCD_write_string("Round");
+    
+    
     while (1) {
         // TODO: Each second:
         //   1. Move the cursor after "Counter:" and print counter
