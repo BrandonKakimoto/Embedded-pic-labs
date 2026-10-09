@@ -37,16 +37,16 @@
  *   Bit mapping: bit6=g, bit5=f, bit4=e, bit3=d, bit2=c, bit1=b, bit0=a
  * Digit 0 is done for you - work out the other nine. */
 static const uint8_t sevenSeg[10] = {
-    0x40,   // 0: a,b,c,d,e,f ON, g OFF
-    0x7F,   // TODO: 1 (b,c ON)
-    0x7F,   // TODO: 2
-    0x7F,   // TODO: 3
-    0x7F,   // TODO: 4
-    0x7F,   // TODO: 5
-    0x7F,   // TODO: 6
-    0x7F,   // TODO: 7
-    0x7F,   // TODO: 8
-    0x7F    // TODO: 9
+    0x3F, // 0 (Segments a,b,c,d,e,f)
+    0x06, // 1 (Segments b,c)
+    0x5B, // 2 (Segments a,b,d,e,g)
+    0x4F, // 3 (Segments a,b,c,d,g)
+    0x66, // 4 (Segments b,c,f,g)
+    0x6D, // 5 (Segments a,c,d,f,g)
+    0x7D, // 6 (Segments a,c,d,e,f,g)
+    0x07, // 7 (Segments a,b,c)
+    0x7F, // 8 (All segments)
+    0x67  // 9 (Segments a,b,c,d,f,g)
 };
 
 #define SEG_BLANK 0x7F  /* All segments OFF */
