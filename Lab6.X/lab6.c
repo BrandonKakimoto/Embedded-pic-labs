@@ -1,6 +1,6 @@
 /*
  * File:   lab6.c
- * Author: <your names here>
+ * Author: <Brandon Kakimoto & Jason Lopez>
  *
  * Lab 6 - Analog-to-Digital Conversion Using PIC18F46K22
  * ECE 3301L - Introduction to Microcontrollers Laboratory
@@ -73,10 +73,19 @@ void main(void) {
     uint16_t adcResult;
 
     while (1) {
-        // TODO: 1. Start a conversion (ADCON0bits.GO = 1)
-        //       2. Wait until the GO bit clears
-        //       3. Clear the ADIF flag
-        //       4. Combine ADRESH:ADRESL into a 10-bit result
+        // 1. Start a conversion (ADCON0bits.GO = 1)
+        ADCON0bits.GO = 1;
+
+        // 2. Wait until the GO bit clears
+        while (ADCON0bits.GO == 1);
+        
+        // 3. Clear the ADIF flag
+        PIR1bits.ADIF = 0;
+        
+        // 4. Combine ADRESH:ADRESL into a 10-bit result
+        adcResult = ((uint16_t)ADRESH << 8) | ADRESL;       // Merge upper and lower bytes into 10-bit value       
+        
+        
         //       5. Lower 8 bits -> LATB, upper 2 bits -> LATD
         //       6. Delay ~100 ms before the next sample
         adcResult = 0;
