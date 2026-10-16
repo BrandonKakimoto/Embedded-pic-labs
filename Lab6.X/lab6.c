@@ -43,7 +43,7 @@ static void init(void) {
     // PORTB all digital outputs, LEDs off
     ANSELB = 0x00;      // Sets PORTB to digital
     TRISB = 0x00;       // Sets PORTB to output
-    LATB = 0x00;        // CLears PORTB latches so the LEDs start OFF
+    LATB = 0x00;        // Clears PORTB latches so the LEDs start OFF
     
     // PORTD all digital outputs, LEDs off
     ANSELD = 0x00;              // Set PORTD to digital
@@ -53,10 +53,18 @@ static void init(void) {
     LATDbits.LATD1 = 0;         // Clear latch RD1 so bit 9 LED starts OFF
 
     // -- ADC Configuration --
-    // TODO: ADCON0 - select channel AN0, turn the ADC module ON
-    // TODO: ADCON1 - positive reference = VDD, negative reference = VSS
-    // TODO: ADCON2 - right-justified, 8 TAD acquisition, FOSC/32 clock
-    // (Datasheet chapter 17 has the field encodings.)
+    // ADCON0 - select channel AN0, turn the ADC module ON
+    ADCON0bits.CHS = 0b00000;       // Select Channel 0 (AN0)
+    ADCON0bits.ADON = 1;            // Turns the ADC module ON
+    
+    // ADCON1 - positive reference = VDD, negative reference = VSS
+    ADCON1bits.PVCFG = 0b00;        // Routes VDD to the positive reference
+    ADCON1bits.NVCFG = 0b00;        // Routes VSS to the negative reference
+    
+    // ADCOn2 - right-justified, 8 TAD acquisition, FOSC/32 clock
+    ADCON2bits.ADFM = 1;            // Sets ADCON2 to right-justified mode; ADRESH = [0,0,0,0,0,0,b9,b8]   ADRESL = [b7,b6,b5,b4,b3,b2,b1,b0]
+    ADCON2bits.ACQT = 0b100;        // 8 TAD acquisition time
+    ADCON2bits.ADCS = 0b010;        // FOSC/32 clock
 }
 
 void main(void) {
