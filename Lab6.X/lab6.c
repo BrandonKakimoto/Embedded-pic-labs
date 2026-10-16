@@ -85,10 +85,11 @@ void main(void) {
         // 4. Combine ADRESH:ADRESL into a 10-bit result
         adcResult = ((uint16_t)ADRESH << 8) | ADRESL;       // Merge upper and lower bytes into 10-bit value       
         
+        // 5. Lower 8 bits -> LATB, upper 2 bits -> LATD
+        LATB = (uint8_t)(adcResult & 0x00FF);                   // Output lower 8 bits (bits 0-7) to PORTB LEDs
+        LATD = (LATD & 0xFC) | ((adcResult >> 8) & 0x03);       // Output upper 2 bits (bits 8-9) to RD0-RD1
         
-        //       5. Lower 8 bits -> LATB, upper 2 bits -> LATD
-        //       6. Delay ~100 ms before the next sample
-        adcResult = 0;
-        (void)adcResult;
+        // 6. Delay ~100 ms before the next sample
+        __delay_ms(100);
     }
 }
