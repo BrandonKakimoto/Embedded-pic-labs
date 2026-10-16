@@ -31,12 +31,26 @@
 #define _XTAL_FREQ 16000000UL   // 16 MHz HFINTOSC
 
 static void init(void) {
-    // TODO: 16 MHz HFINTOSC
-
+    // 16 MHz HFINTOSC
+    OSCCONbits.IRCF = 0b111;     // 16MHz HFINTOSC
+    OSCCONbits.SCS = 0b10;       // Use the internal oscillator as the system clock
+    
     // -- Port Configuration --
-    // TODO: RA0 as INPUT and ANALOG (TRISAbits, ANSELAbits)
-    // TODO: PORTB all digital outputs, LEDs off
-    // TODO: PORTD all digital outputs, LEDs off
+    // RA0 as INPUT and ANALOG (TRISAbits, ANSELAbits)
+    TRISAbits.TRISA0 = 1;          // Sets RA0 to input
+    ANSELAbits.ANSA0 = 1;       // Sets RA0 to analog
+    
+    // PORTB all digital outputs, LEDs off
+    ANSELB = 0x00;      // Sets PORTB to digital
+    TRISB = 0x00;       // Sets PORTB to output
+    LATB = 0x00;        // CLears PORTB latches so the LEDs start OFF
+    
+    // PORTD all digital outputs, LEDs off
+    ANSELD = 0x00;              // Set PORTD to digital
+    TRISDbits.TRISD0 = 0;       // Set RD0 to output
+    TRISDbits.TRISD1 = 0;       // Set RD1 to output
+    LATDbits.LATD0 = 0;         // Clear latch RD0 so bit 8 LED starts OFF
+    LATDbits.LATD1 = 0;         // Clear latch RD1 so bit 9 LED starts OFF
 
     // -- ADC Configuration --
     // TODO: ADCON0 - select channel AN0, turn the ADC module ON
