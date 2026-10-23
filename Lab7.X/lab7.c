@@ -44,11 +44,14 @@ void __interrupt() ISR(void) {
     //   If the ADC interrupt flag (PIR1bits.ADIF) is set:
     if (PIR1bits.ADIF) {
         //   1. Read ADRESH:ADRESL into adcResult
-        adcResult = ((uint16_t)ADRESH << 8) | ADRESL;
+        adcResult = ((uint16_t)ADRESH << 8) | ADRESL;       // Merge upper and lower bytes into 10-bit value
+        
         //   2. Set adcReady = 1
-        adcReady = 1;
+        adcReady = 1;               // Flag that a fresh ADC conversion is ready
+        
         //   3. Clear ADIF
         PIR1bits.ADIF = 0;
+        
         //   4. Start the next conversion (GO = 1)
         ADCON0bits.GO = 1;
     }
@@ -97,30 +100,51 @@ static void init(void) {
     // clear ADIF, then enable in this order:
     //       ADIE (peripheral source), PEIE (peripheral group), GIE (global)
     PIR1bits.ADIF   = 0;          // Clear the ADIF flag
-    PIE1bits.ADIE   = 1;
-    INTCONbits.PEIE = 1;
-    INTCONbits.GIE  = 1;
+    PIE1bits.ADIE   = 1;          // Enable ADC interrupt
+    INTCONbits.PEIE = 1;          // Enable peripheral interrupts
+    INTCONbits.GIE  = 1;          // Enable global interrupts
 }
 
 void main(void) {
     init();
     LCD_init();
 
-    // TODO: Write static labels: line 1 "ADC:", line 2 "Volt:"
-
-    // TODO: Start the FIRST conversion here (the ISR keeps it going)
-
+    // Write static labels: line 1 "ADC:", line 2 "Volt:"
+    LCD_cursor_set(1, 1);
+    LCD_write_string("ADC:");
+    
+    LCD_cursor_set(2, 1);
+    LCD_write_string("Volt:");
+    
+    // Start the FIRST conversion here (the ISR keeps it going)
+    ADCON0bits.GO = 1;
+    
     while (1) {
         if (adcReady) {
-            adcReady = 0;
+            adcReady = 0;       // Reset flag and wait for next conversion
 
-            // TODO: 1. Copy adcResult to a local variable
-            //       2. Lower 8 bits -> LATB; bits 8-9 -> LATC0/LATC1
-            //       3. voltage = (adc / 1023.0) * 5.0
-            //       4. LCD line 1: print adc (LCD_write_variable, width 4)
-            //       5. LCD line 2: print voltage (LCD_write_float, width 4,
-            //          2 decimals) followed by 'V'
-            //       6. Delay ~100 ms (about a 10 Hz update rate)
+            // 1. Copy adcResult to a local variable
+            uint16_t adc = adcResult;
+            
+            // 2. Lower 8 bits -> LATB; bits 8-9 -> LATC0/LATC1
+            LATB = (uint8_t)(adc & 0x00FF);                            // Output lower 8 bits (bits 0-7) to PORTB LEDs
+            LATC = (LATC & 0xFC) | ((adc >> 8) & 0x03);                // Output upper 2 bits (bits 8-9) to RC0-RC1
+            
+            // 3. voltage = (adc / 1023.0) * 5.0
+            float voltage = (adc / 1023.0f) * 5.0f;
+            
+            // 4. LCD line 1: print adc (LCD_write_variable, width 4)
+            LCD_cursor_set(1, 6);
+            LCD_write_variable(adc, 4);             // Display 10-bit decimal ADC value
+            
+            // 5. LCD line 2: print voltage (LCD_write_float, width 4, 2 decimals) followed by 'V'
+            LCD_cursor_set(2, 7);
+            LCD_write_float(voltage, 4, 2);             // Display voltage with 2 decimals
+            LCD_write_char('V');                        // Append 'V' unit to the display
+                      
+            // 6. Delay ~100 ms (about a 10 Hz update rate)
+            __delay_ms(100);
+            
         }
     }
 }
