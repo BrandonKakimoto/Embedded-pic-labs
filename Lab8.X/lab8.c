@@ -170,22 +170,43 @@ static uint8_t DHT11_read(void) {
 }
 
 void main(void) {
-    init();
-    LCD_init();
-
-    // TODO: Write static labels:
+    init();                 
+    LCD_init();             
+ 
+    // Write static labels:
     //   line 1: "Temp:       C"
     //   line 2: "Hum :       %"
-
+    LCD_cursor_set(1,1);                    // Set cursor to row 1, column 1
+    LCD_write_string("Temp:       C");      // Write the temperature label
+    
+    LCD_cursor_set(2,1);                    // Set cursor to row 2, column 1
+    LCD_write_string("Hum :       %");      // Write the humidity label
+    
+ 
     // DHT11 needs ~1 second to stabilize after power-on
     __delay_ms(1000);
-
-    while (1) {
-        // TODO: if DHT11_read() succeeds:
+ 
+    while (1) {             // Loop forever
+        // if DHT11_read() succeeds:
         //   - print dht11_data[2] (temperature integer) on line 1
         //   - print dht11_data[0] (humidity integer) on line 2
         // else show an error indicator on the LCD.
-        //
+        
+        if (DHT11_read() == 1) {                    // Reading was successful
+            LCD_cursor_set(1, 7);                   // Move to the temperature value spot
+            LCD_write_variable(dht11_data[2], 2);   // Show the temperature (2 digits)
+            
+            LCD_cursor_set(2, 7);                   // Move to the humidity value spot
+            LCD_write_variable(dht11_data[0], 2);   // Show the humidity (2 digits)
+        } else {                                    // Reading failed
+            LCD_cursor_set(1, 7);                   // Move to the temperature value spot
+            LCD_write_string("--");                 // Show error dashes
+            
+            LCD_cursor_set(2, 7);                   // Move to the humidity value spot
+            LCD_write_string("--");                 // Show error 
+        }
+        
+        
         // The DHT11 requires at least 1 second between readings -
         // delay 2 seconds per loop.
         __delay_ms(2000);
