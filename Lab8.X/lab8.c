@@ -68,13 +68,49 @@ static uint8_t DHT11_read(void) {
     //   - Drive the data line LOW (output mode) for at least 18 ms
     //   - Release: drive HIGH briefly (~30 us), then switch to INPUT
     //     and let the pull-up hold the line HIGH
-    //
+    
+    DHT11_TRIS = 0;         // Set the data line on DHT11 to output
+    DHT11_LAT = 0;          // Drive the data line on DHT11 LOW
+    __delay_ms(18);         // Delay for 18 ms
+    
+    DHT11_LAT = 1;          // Drive the data line on DTH11 HIGH
+    __delay_us(30);         // Delay for 30 us
+    
+    DHT11_TRIS = 1;         // Set the data line on DHT11 to input
+    
     // Step 2: Sensor response (use timeouts so a missing sensor
     //         cannot hang the program!)
     //   - Wait out: line HIGH -> LOW  (~80 us response low)
     //   - Wait out: LOW -> HIGH      (~80 us response high)
     //   - Wait out: HIGH -> LOW      (start of first bit)
-    //
+    
+    uint8_t timeout = 0;            // Counts loop passes
+    while (DHT11_PORT == 1) {       // Waiting for line to go LOW
+        __delay_us(1);              // Wait 1 us between checks
+        timeout++;                  
+        if(timeout > 100) {         // Waited too long, sensor did not respond
+            return 0;
+        }
+    }
+    
+    timeout = 0;
+    while (DHT11_PORT == 0) {       // Waiting for line to go HIGH
+        __delay_us(1);              // Wait 1 us between checks
+        timeout++;                  
+        if(timeout > 100) {         // Waited too long
+            return 0;
+        }
+    }
+    
+    timeout = 0;
+    while (DHT11_PORT == 1) {       // Waiting for line to go LOW
+        __delay_us(1);              // Wait 1 us between checks
+        timeout++;
+        if(timeout > 100) {         // Waited too long
+            return 0;
+        }
+    }
+    
     // Step 3: Read 40 bits (5 bytes, MSB first). For each bit:
     //   - Wait through the ~50 us LOW bit-start
     //   - Delay ~35 us, then sample the line:
