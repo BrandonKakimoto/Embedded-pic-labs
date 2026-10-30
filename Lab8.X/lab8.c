@@ -62,7 +62,7 @@ static void init(void) {
  * Returns 1 on success (checksum valid), 0 on failure.
  */
 static uint8_t DHT11_read(void) {
-    // TODO - implement the DHT11 protocol:
+    // implement the DHT11 protocol:
     //
     // Step 1: MCU start signal
     //   - Drive the data line LOW (output mode) for at least 18 ms
