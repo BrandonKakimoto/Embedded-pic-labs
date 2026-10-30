@@ -77,7 +77,7 @@ static void init(void) {
  * Returns distance in centimeters, or 0 if no echo / timeout.
  */
 static uint16_t measure_distance(void) {
-    TMR1H = 0;              // TODO: 1. Clear Timer1 (TMR1H/TMR1L) and TMR1IF
+    TMR1H = 0;              // 1. Clear Timer1 (TMR1H/TMR1L) and TMR1IF
     TMR1L = 0;        
     PIR1bits.TMR1IF = 0; 
     
