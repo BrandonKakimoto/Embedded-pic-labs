@@ -161,14 +161,7 @@ static uint8_t DHT11_read(void) {
     }
    
 }
-
-    // Step 4: Verify the checksum:
-    //   (bytes 0+1+2+3) & 0xFF must equal byte 4
-    //
-    // Return 1 only if everything succeeded.
-    return 0;
-}
-
+ 
 void main(void) {
     init();                 
     LCD_init();             
