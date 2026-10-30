@@ -117,7 +117,51 @@ static uint8_t DHT11_read(void) {
     //       still HIGH -> bit is '1' (then wait for the HIGH to end)
     //       already LOW -> bit is '0'
     //   - Shift the bit into dht11_data[i]
+    
+    for (int i = 0; i < 5; i++) {               // Loop through all 5 bytes
+        dht11_data[i] = 0;                      // Clear the byte before filling it
+        for (int j = 0; j < 8; j++) {           // Loop through the 8 bits of this byte
+            timeout = 0;                        // Reset the timeout counter
+            while (DHT11_PORT == 0) {           // Wait for the LOW bit-start to end
+                  __delay_us(1);
+                timeout++;
+                if (timeout > 100) {
+                    return 0;
+                }
+            }
+            __delay_us(35);                     // Wait 35 us, then check the line
+            
+            if (DHT11_PORT == 1) {                                  // Line still HIGH, so this bit is a 1
+                dht11_data[i] = (dht11_data[i] << 1) | 1;           // Shift left and add a 1
+                timeout = 0;                                        // Reset the timeout counter
+                while (DHT11_PORT == 1) {                           // Wait for the HIGH part to end
+                      __delay_us(1);                                // Wait 1 us between checks
+                    timeout++;                                      
+                    if (timeout > 100) {                            // Waited too long
+                        return 0;                                   // Report failure
+                    }
+                }
+            }
+            else {                                                  // Line already LOW, so this bit is a 0
+                dht11_data[i] = (dht11_data[i] << 1);               // Shift left (adds a 0)
+            }
+            
+        }
+    }
+   
+    // Step 4: Verify the checksum:
+    //   (bytes 0+1+2+3) & 0xFF must equal byte 4
     //
+    // Return 1 only if everything succeeded.
+    
+    if (((dht11_data[0] + dht11_data[1] + dht11_data[2] + dht11_data[3]) & 0xFF) == dht11_data[4]) {
+        return 1;           // Checksum matches, data is valid
+    } else {
+        return 0;           // Checksum does not match, data is bad
+    }
+   
+}
+
     // Step 4: Verify the checksum:
     //   (bytes 0+1+2+3) & 0xFF must equal byte 4
     //
