@@ -1,6 +1,6 @@
 /*
  * File:   lab9.c
- * Author: <your names here>
+ * Author: <Jason Lopez>
  *
  * Lab 9 - Ultrasonic Distance Measurement and Target Detection
  * ECE 3301L - Introduction to Microcontrollers Laboratory
@@ -50,12 +50,26 @@
 #define ALERT_LAT   LATCbits.LATC0
 
 static void init(void) {
-    // TODO: 16 MHz HFINTOSC
-    // TODO: ANSELA/B/C/D digital
-    // TODO: TRIG output (start LOW), ECHO input, alert LED output (off)
-
-    // TODO: Timer1 - internal clock (FOSC/4), 1:8 prescaler, OFF for now,
-    //       TMR1H/TMR1L cleared, overflow flag (TMR1IF) cleared
+    OSCCONbits.IRCF = 0b111; // 16 MHz HFINTOSC
+    OSCCONbits.SCS = 0b10;     
+    ANSELA = 0x00;              // ANSELA/B/C/D digital
+    ANSELB = 0x00;
+    ANSELC = 0x00; 
+    ANSELD = 0x00;
+            
+    TRIG_TRIS = 0;        //TRIG (RB0) is set as output 
+    ECHO_TRIS = 1;       //ECHO (RB1) set as input
+    ALERT_TRIS = 0;       //Alert LED (RB2) set as Output  
+    ALERT_LAT= 0;          //Alert LED (RB2) off 
+    TRIG_LAT = 0;         //TRIG (RB0) start Low 
+    
+    T1CONbits.TMR1CS = 0;       // Timer1 internal clock
+    T1CONbits.T1CKPS = 0b11;    // 1:8 Prescaler 
+    T1CONbits.TMR1ON = 0;       // Timer1 off for now                     
+                                
+    TMR1H = 0;                   // TMR1 high and low bits cleared
+    TMR1L = 0;       
+    PIR1bits.TMR1IF = 0;        // Overflow flag cleared 
 }
 
 /**
@@ -63,37 +77,80 @@ static void init(void) {
  * Returns distance in centimeters, or 0 if no echo / timeout.
  */
 static uint16_t measure_distance(void) {
-    // TODO: 1. Clear Timer1 (TMR1H/TMR1L) and TMR1IF
-    //       2. Send a 10 us trigger pulse on TRIG
-    //       3. Wait for ECHO to go HIGH - with a timeout that
-    //          returns 0 if the echo never arrives
-    //       4. Start Timer1
-    //       5. Wait for ECHO to go LOW - if TMR1IF overflows first
-    //          (~131 ms), stop the timer and return 0
-    //       6. Stop Timer1 and read TMR1H:TMR1L
-    //       7. Convert ticks to cm:
-    //          each tick = 2 us  ->  distance_cm = ticks * 2 / 58
-    return 0;
+    TMR1H = 0;              // TODO: 1. Clear Timer1 (TMR1H/TMR1L) and TMR1IF
+    TMR1L = 0;        
+    PIR1bits.TMR1IF = 0; 
+    
+    TRIG_LAT = 1;   // 10 us trigger pulse on TRIG
+    __delay_us(10);
+    TRIG_LAT = 0;
+    
+    unsigned int timeout = 10000; // Wait for ECHO to go high with a timeout that returns 0 if echo never turns high
+    
+        while (ECHO_PORT == 0){
+                timeout -- ;
+                if (timeout == 0){
+                   return 0;  
+            }            
+        }
+
+    T1CONbits.TMR1ON = 1;       //Start Timer1
+    
+    while (ECHO_PORT == 1){      //If TMR1IF overflows while waiting for echo to go low stop TMR1 and return 0
+        if ( PIR1bits.TMR1IF == 1){
+            T1CONbits.TMR1ON = 0;
+           
+            return 0;
+        }
+    }                            
+    
+    T1CONbits.TMR1ON = 0;// STOP TMR1 
+    
+    uint16_t ticks; //       Stop Timer1 and read TMR1H:TMR1L
+    uint16_t distance_cm;
+    ticks = ((uint16_t) TMR1H << 8)| TMR1L; // read TMR1H and TMR1L, shift TMR1H left 8 bits and use TMR1L as lower 8 bits 
+    
+    distance_cm = (ticks * 2)/58 ;      //Convert ticks to cm:
+                                        //each tick = 2 us  ->  distance_cm = ticks * 2 / 58
+    return distance_cm;
 }
 
 void main(void) {
     init();
     LCD_init();
 
-    // TODO: line 1 static label: "Distance cm"
+    LCD_cursor_set (1,1);             //line 1 label distance cm on LCD display
+    LCD_write_string ("distance cm"); 
 
     __delay_ms(500);    /* Let the sensor stabilize */
-
+   
     while (1) {
         uint16_t distance = measure_distance();
 
-        // TODO: Clear LCD line 2, then:
-        //   distance == 0            -> "Out of range"
-        //   distance <= THRESHOLD_CM -> "Target Detected",
-        //                               LED on for 1 second, then off
-        //   otherwise                -> print the distance value, LED off
+    LCD_cursor_set (2,1);                   //clear line 2 of LCD 
+    LCD_write_string ("               ");
+    LCD_cursor_set (2,1);
+    
+    if (distance == 0){                         // if distance == 0 LCD display "out of range"
+        LCD_write_string ("Out of range");
+        ALERT_LAT = 0;
+    }                                          
+    else if (distance <= THRESHOLD_CM){         //if distance <= threshold_cm LCD display "target detected"
+        LCD_write_string ("Target Detected");
+        ALERT_LAT = 1;                    // Turn on LED for 1 sec then off
+        __delay_ms(1000);
+        ALERT_LAT = 0;
+       
+    }                                        
+    
+    else{ 
+        LCD_write_variable (distance,0);
+       LCD_write_string (" cm");           // display distance value and led off
+       ALERT_LAT = 0;
+        
+    }     
         (void)distance;
 
-        __delay_ms(200);    /* Pause before the next measurement */
+        __delay_ms(200);    
     }
 }
