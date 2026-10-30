@@ -1,6 +1,6 @@
 /*
  * File:   lab8.c
- * Author: <your names here>
+ * Author: Brandon Kakimoto & Jason Lopez
  *
  * Lab 8 - DHT11 Humidity and Temperature Sensor
  * ECE 3301L - Introduction to Microcontrollers Laboratory
@@ -48,8 +48,13 @@
 static uint8_t dht11_data[5];
 
 static void init(void) {
-    // TODO: 16 MHz HFINTOSC
-    // TODO: ANSELA / ANSELD digital (LCD + DHT11 pins)
+    // 16 MHz HFINTOSC
+    OSCCONbits.IRCF = 0b111;        // 16 MHz HFINTOSC
+    OSCCONbits.SCS = 0b10;          // Use the internal oscillator as the system clock
+    
+    // ANSELA / ANSELD digital (LCD + DHT11 pins)
+    ANSELA = 0x00;      // Sets PORTA to digital
+    ANSELD = 0x00;      // Sets PORTD to digital
 }
 
 /**
