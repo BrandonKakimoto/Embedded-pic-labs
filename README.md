@@ -1,65 +1,115 @@
-# ECE 3301L — Microcontrollers Lab (Pair Repository)
+# Embedded Systems with the PIC18F46K22
 
-This is your team's repository for the whole semester. A new `LabN.X`
-folder appears here each week when the lab is released — `git pull` at
-the start of each lab session.
+C programs I wrote for a small microcontroller, the **PIC18F46K22**. They start with turning LEDs on and off and build up to using displays, reading analog voltages, handling interrupts, and reading a digital sensor.
 
-## Workflow
+Built for **ECE 3301L – Introduction to Microcontrollers Lab** at **Cal Poly Pomona**.
 
-1. `git pull` to get the newest lab folder.
-2. Open the `LabN.X` project in MPLAB X and complete every `TODO` in the
-   source file. Lab 1 is provided complete as a worked example.
-3. Commit and push as you work:
+---
 
-   ```bash
-   git add LabN.X
-   git commit -m "Lab N: working LED sequence"
-   git push
-   ```
+## What I Learned
 
-4. Every push runs **Lab CI** — check the **Actions** tab. Two jobs:
+| Skill | In plain terms |
+|---|---|
+| **Inputs and outputs** | Reading buttons and turning LEDs on and off by setting the chip's pins |
+| **State machines** | Writing a program as a set of "modes" with clear rules for moving between them (e.g., green → yellow → red) |
+| **Displays** | Showing text on an LCD screen and numbers on seven-segment displays |
+| **Analog-to-digital conversion (ADC)** | Turning a voltage, like a knob's position, into a number the program can use |
+| **Interrupts** | Letting the hardware tell the program when something is ready, instead of the program checking over and over |
+| **Sensors** | Reading a temperature and humidity sensor by following its datasheet |
 
-   - **Compile** builds every project exactly as the grader does
-     (`xc8-cc -Wall` / `pic-as`). A green check means every project
-     assembles, links and produces firmware. Compiler warnings in *your*
-     files show up as annotations on the run, with file and line.
-     The run's **Artifacts** section has every `firmware.hex` it built,
-     so you can flash a CI-built hex if your local toolchain misbehaves.
-   - **Repository checks** fails the run if build artifacts
-     (`build/`, `dist/`, `*.hex`, `*.p1`, …) are committed or if a
-     *frozen* contract file (for example `uart.h` in Lab 16) is changed.
-     It warns if a provided library file (`LCD.c`, config headers …)
-     is modified, and runs a lint that points at classic PIC18 mistakes:
-     writing `PORTx` instead of `LATx`, `__delay_ms` without
-     `_XTAL_FREQ`, an ISR with no `GIE` or no flag clear, `ANSELx`
-     written through the access bank in assembly, `main()` without a
-     `while(1)`, `=` inside an `if`. The summary also shows a
-     **Requirements checklist** per lab (the same structures the grader's
-     static score looks for, matched in code, not comments), counts the
-     `TODO` markers you have left, and shows who has committed to each lab.
+---
 
-   Every lab folder has a `CI_CHECKS.md` that lists exactly what the run
-   looks for in that lab: the required structures and the mistakes that
-   lab is known for. Read it before you start.
+## Tools & Hardware
 
-   **A green check is required but does not by itself mean the lab is
-   correct** — behavior is graded on hardware in lab. Warnings never
-   block the check, but read them: most of them are bugs you have not
-   met yet.
+- **Microcontroller:** PIC18F46K22
+- **Board:** Microchip Curiosity Development Board
+- **Software:** MPLAB X IDE with the XC8 C compiler
 
-5. To submit: copy the URL of your final commit
-   (repository page → Commits → the one you want) and paste it into the
-   Canvas assignment. One submission per pair.
+---
 
-## Rules
+## Projects
 
-- Both partners must contribute commits. Commit history is part of the
-  grade record.
-- Do not modify anything under `.github/`, the provided library files
-  (`LCD.c`, `OLED.c`), or the configuration headers unless the lab says
-  to. CI compares them against the release.
-- Do not commit MPLAB `build/`, `dist/`, or `debug/` folders (the
-  `.gitignore` already prevents this).
-- The work must be your team's own. Copying another team's repository
-  is an academic-integrity violation, and commit histories make it
-  easy to detect.
+| # | Project | One-line summary |
+|---|---|---|
+| 2 | [Dice Roller](#lab-2--dice-roller) | Press a button, roll two LED dice |
+| 3 | [Traffic Light](#lab-3--traffic-light) | A timed traffic light for a four-way intersection |
+| 4 | [Traffic Light with Emergency & Crosswalk](#lab-4--traffic-light-with-emergency--crosswalk) | Adds an emergency stop button and a crosswalk countdown |
+| 5 | [LCD & Seven-Segment Displays](#lab-5--lcd--seven-segment-displays) | Shows counters on two kinds of displays |
+| 6 | [Reading a Knob (ADC)](#lab-6--reading-a-knob-adc) | Reads a knob's position and shows it on LEDs |
+| 7 | [Digital Voltmeter](#lab-7--digital-voltmeter) | Measures voltage and shows it on the LCD, using interrupts |
+| 8 | [Temperature & Humidity Monitor](#lab-8--temperature--humidity-monitor) | Reads a DHT11 sensor and shows the results |
+
+---
+
+### Lab 2 – Dice Roller
+**What it does:** Two groups of LEDs act like dice. Pressing a button picks two random numbers from 1 to 6 and lights up the matching dice pattern for 3 seconds.
+
+**How it works:** A lookup table stores which LEDs to turn on for each number, so the program doesn't need a separate `if` statement for every face. The program also waits for the button to be released so one press doesn't count as several rolls (this is called *debouncing*).
+
+### Lab 3 – Traffic Light
+**What it does:** Controls 12 LEDs as traffic lights for North, South, East, and West. East–West gets green for 6 seconds, then yellow for 3, then North–South gets the same.
+
+**How it works:** The program is a *state machine*: each step of the light cycle is a state, and the program moves through them in order. It starts with all lights red so it's always in a safe state, and two directions can never be green at the same time.
+
+### Lab 4 – Traffic Light with Emergency & Crosswalk
+**What it does:** Builds on Lab 3 with two buttons:
+- **Emergency stop:** flashes every light red right away. It overrides everything else.
+- **Crosswalk button:** the program remembers the press and waits for a safe moment in the cycle, then counts down 9 to 0 on a seven-segment display.
+
+**How it works:** The main idea is *priority*. The emergency button always wins. The crosswalk request is saved and only handled when it's safe, the same way a real crosswalk button works.
+
+### Lab 5 – LCD & Seven-Segment Displays
+**What it does:**
+- **Part 1:** A 16x2 LCD screen counts from 0 to 15 and keeps track of how many times it has started over.
+- **Part 2:** Two seven-segment digits count seconds from 00 to 59.
+
+**How it works:** The two digits share the same wires. The program lights one digit, then the other, switching so fast your eye sees both on at once (this is called *multiplexing*). It saves pins on the chip.
+
+### Lab 6 – Reading a Knob (ADC)
+**What it does:** Reads the position of a knob (potentiometer) and shows the value in binary on 10 LEDs.
+
+**How it works:** The chip's ADC turns the knob's voltage into a number from 0 to 1023. The program starts a conversion, waits for it to finish, and copies the result to the LEDs.
+
+### Lab 7 – Digital Voltmeter
+**What it does:** Same as Lab 6, but it also calculates the actual voltage (0–5 V) and shows both the raw number and the voltage on the LCD.
+
+**How it works:** Instead of waiting in a loop for the ADC, the program uses an *interrupt*: the ADC signals when it's done, and a special function handles the result right away. The voltage is calculated as `value ÷ 1023 × 5 V`. I also had to move some LEDs to different pins because the LCD needed them.
+
+### Lab 8 – Temperature & Humidity Monitor
+**What it does:** Reads temperature and humidity from a DHT11 sensor and shows them on the LCD.
+
+**How it works:** The sensor sends data over a single wire, and each 0 or 1 is encoded by how long the signal stays high. Following the datasheet, the program sends a "start" signal, then times each pulse to read 40 bits. It checks the last byte (a *checksum*) to make sure the data arrived correctly.
+
+---
+
+## How to Run
+
+1. Install [MPLAB X IDE](https://www.microchip.com/mplab/mplab-x-ide) and the [XC8 compiler](https://www.microchip.com/mplab/compilers).
+2. Open a lab folder as a project in MPLAB X, or create a new **PIC18F46K22** project and add that lab's files.
+3. Connect the Curiosity board, then build and upload.
+4. Wire the parts as described in that lab.
+
+---
+
+## Folder Layout
+
+```
+.
+├── Lab02_Dice/
+├── Lab03_TrafficLight/
+├── Lab04_TrafficLight_EmergencyPedestrian/
+├── Lab05_LCD_SevenSegment/
+├── Lab06_ADC_Polling/
+├── Lab07_ADC_Interrupt_LCD/
+├── Lab08_DHT11/
+└── README.md
+```
+
+---
+
+## Author
+
+**Brandon Kakimoto**, Cal Poly Pomona
+[GitHub](https://github.com/BrandonKakimoto)
+
+> Course projects for ECE 3301L. The lab instructions came from the course. The code is my own.
